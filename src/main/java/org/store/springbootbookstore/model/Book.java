@@ -19,7 +19,7 @@ import lombok.ToString;
 public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
     @Column(nullable = false)
     private String title;
     @Column(nullable = false)
