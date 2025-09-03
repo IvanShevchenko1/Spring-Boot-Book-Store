@@ -21,41 +21,41 @@ public class SpringBootBookStoreApplication {
     @Bean
     public CommandLineRunner commandLineRunner() {
         return args -> {
-            Book book1 = new Book();
-            book1.setTitle("Clean Code");
-            book1.setAuthor("Robert C. Martin");
-            book1.setIsbn("9780132350884");
-            book1.setPrice(BigDecimal.valueOf(45.50));
-            book1.setDescription("A Handbook of Agile Software Craftsmanship");
-            book1.setCoverImage("1111.jpg");
-            bookService.save(book1);
+            Book bookCleanCode = new Book();
+            bookCleanCode.setTitle("Clean Code");
+            bookCleanCode.setAuthor("Robert C. Martin");
+            bookCleanCode.setIsbn("9780132350884");
+            bookCleanCode.setPrice(BigDecimal.valueOf(45.50));
+            bookCleanCode.setDescription("A Handbook of Agile Software Craftsmanship");
+            bookCleanCode.setCoverImage("1111.jpg");
+            bookService.save(bookCleanCode);
 
-            Book book2 = new Book();
-            book2.setTitle("Effective Java");
-            book2.setAuthor("Joshua Bloch");
-            book2.setIsbn("9780134685991");
-            book2.setPrice(BigDecimal.valueOf(55.99));
-            book2.setDescription("Best practices for the Java platform");
-            book2.setCoverImage("2222.jpg");
-            bookService.save(book2);
+            Book bookJava = new Book();
+            bookJava.setTitle("Effective Java");
+            bookJava.setAuthor("Joshua Bloch");
+            bookJava.setIsbn("9780134685991");
+            bookJava.setPrice(BigDecimal.valueOf(55.99));
+            bookJava.setDescription("Best practices for the Java platform");
+            bookJava.setCoverImage("2222.jpg");
+            bookService.save(bookJava);
 
-            Book book3 = new Book();
-            book3.setTitle("Design Patterns: Elements of Reusable Object-Oriented Software");
-            book3.setAuthor("Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides");
-            book3.setIsbn("9780201633610");
-            book3.setPrice(BigDecimal.valueOf(60.00));
-            book3.setDescription("Classic book on design patterns in software engineering");
-            book3.setCoverImage("3333.jpg");
-            bookService.save(book3);
+            Book bookPatterns = new Book();
+            bookPatterns.setTitle("Design Patterns: Elements of Reusable Object-Oriented Software");
+            bookPatterns.setAuthor("Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides");
+            bookPatterns.setIsbn("9780201633610");
+            bookPatterns.setPrice(BigDecimal.valueOf(60.00));
+            bookPatterns.setDescription("Classic book on design patterns in software engineering");
+            bookPatterns.setCoverImage("3333.jpg");
+            bookService.save(bookPatterns);
 
-            Book book4 = new Book();
-            book4.setTitle("Spring in Action");
-            book4.setAuthor("Craig Walls");
-            book4.setIsbn("9781617294945");
-            book4.setPrice(BigDecimal.valueOf(50.00));
-            book4.setDescription("Comprehensive guide to Spring Framework and Spring Boot");
-            book4.setCoverImage("4444.jpg");
-            bookService.save(book4);
+            Book bookSpring = new Book();
+            bookSpring.setTitle("Spring in Action");
+            bookSpring.setAuthor("Craig Walls");
+            bookSpring.setIsbn("9781617294945");
+            bookSpring.setPrice(BigDecimal.valueOf(50.00));
+            bookSpring.setDescription("Comprehensive guide to Spring Framework and Spring Boot");
+            bookSpring.setCoverImage("4444.jpg");
+            bookService.save(bookSpring);
 
             System.out.println("All books in database:");
             bookService.findAll().forEach(System.out::println);
