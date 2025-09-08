@@ -1,6 +1,7 @@
 package org.store.springbootbookstore.repository.impl;
 
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -43,6 +44,13 @@ public class BookRepositoryImpl implements BookRepository {
             return session.createQuery("from Book", Book.class).list();
         } catch (Exception e) {
             throw new DataProcessingException("Can't get a list of Books from db", e);
+        }
+    }
+
+    @Override
+    public Optional<Book> findById(Long id) {
+        try (Session session = sessionFactory.openSession()) {
+            return Optional.ofNullable(session.find(Book.class, id));
         }
     }
 }

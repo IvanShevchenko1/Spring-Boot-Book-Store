@@ -1,8 +1,13 @@
 package org.store.springbootbookstore.service.impl;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.store.springbootbookstore.dto.BookDto;
+import org.store.springbootbookstore.dto.CreateBookRequestDto;
+import org.store.springbootbookstore.exception.EntityNotFoundException;
+import org.store.springbootbookstore.mapper.BookMapper;
 import org.store.springbootbookstore.model.Book;
 import org.store.springbootbookstore.repository.BookRepository;
 import org.store.springbootbookstore.service.BookService;
@@ -12,13 +17,28 @@ import org.store.springbootbookstore.service.BookService;
 public class BookServiceImpl implements BookService {
     private final BookRepository bookRepository;
 
+    private final BookMapper bookMapper;
+
     @Override
-    public Book save(Book book) {
-        return bookRepository.save(book);
+    public BookDto save(CreateBookRequestDto requestDto) {
+        return bookMapper.toDto(bookRepository
+                .save(bookMapper
+                        .toModel(requestDto)));
     }
 
     @Override
-    public List<Book> findAll() {
-        return bookRepository.findAll();
+    public List<BookDto> findAll() {
+        return bookRepository.findAll()
+                .stream()
+                .map(bookMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public BookDto findById(Long id) {
+        Book bookById = bookRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException("Can't find book by id: " + id)
+        );
+        return bookMapper.toDto(bookById);
     }
 }
