@@ -1,10 +1,13 @@
 package org.store.springbootbookstore.service;
 
 import java.util.List;
-import org.store.springbootbookstore.model.Book;
+import org.store.springbootbookstore.dto.BookDto;
+import org.store.springbootbookstore.dto.CreateBookRequestDto;
 
 public interface BookService {
-    Book save(Book book);
+    BookDto save(CreateBookRequestDto requestDto);
 
-    List<Book> findAll();
+    List<BookDto> findAll();
+
+    BookDto findById(Long id);
 }
