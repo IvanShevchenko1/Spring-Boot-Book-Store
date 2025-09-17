@@ -29,15 +29,6 @@ public class CustomGlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
-    private String getErrorMessage(ObjectError e) {
-        if (e instanceof FieldError) {
-            String field = ((FieldError) e).getField();
-            String message = e.getDefaultMessage();
-            return field + ": " + message;
-        }
-        return e.getDefaultMessage();
-    }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleAllExceptions(Exception ex) {
         Map<String,Object> body = new LinkedHashMap<>();
@@ -54,4 +45,12 @@ public class CustomGlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
+    private String getErrorMessage(ObjectError e) {
+        if (e instanceof FieldError) {
+            String field = ((FieldError) e).getField();
+            String message = e.getDefaultMessage();
+            return field + ": " + message;
+        }
+        return e.getDefaultMessage();
+    }
 }
