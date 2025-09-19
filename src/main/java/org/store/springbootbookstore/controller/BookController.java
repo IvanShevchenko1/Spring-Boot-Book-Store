@@ -1,6 +1,7 @@
 package org.store.springbootbookstore.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,6 +20,7 @@ import org.store.springbootbookstore.dto.BookDto;
 import org.store.springbootbookstore.dto.CreateBookRequestDto;
 import org.store.springbootbookstore.service.BookService;
 
+@Tag(name = "Books", description = "CRUD operations for managing books")
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/books")
