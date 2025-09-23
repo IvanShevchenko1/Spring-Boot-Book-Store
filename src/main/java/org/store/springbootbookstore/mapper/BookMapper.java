@@ -5,8 +5,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.store.springbootbookstore.config.MapperConfig;
-import org.store.springbootbookstore.dto.BookDto;
-import org.store.springbootbookstore.dto.CreateBookRequestDto;
+import org.store.springbootbookstore.dto.book.BookDto;
+import org.store.springbootbookstore.dto.book.CreateBookRequestDto;
 import org.store.springbootbookstore.model.Book;
 
 @Mapper(config = MapperConfig.class)
