@@ -50,7 +50,7 @@ public class CustomGlobalExceptionHandler {
         Map<String,Object> body = new LinkedHashMap<>();
         body.put("Timestamp", LocalDateTime.now());
         body.put("Error", ex.getMessage());
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
     }
 
     private String getErrorMessage(ObjectError e) {

@@ -19,7 +19,7 @@ import org.store.springbootbookstore.service.UserService;
         description = "Endpoint for users to register and login")
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/auth")
 public class AuthenticationController {
     private final UserService userService;
 
