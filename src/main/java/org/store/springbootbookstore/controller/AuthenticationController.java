@@ -23,7 +23,7 @@ import org.store.springbootbookstore.service.UserService;
 public class AuthenticationController {
     private final UserService userService;
 
-    @PostMapping
+    @PostMapping("/registration")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Register new User")
     public UserResponseDto register(
