@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.store.springbootbookstore.dto.BookDto;
-import org.store.springbootbookstore.dto.CreateBookRequestDto;
+import org.store.springbootbookstore.dto.book.BookDto;
+import org.store.springbootbookstore.dto.book.CreateBookRequestDto;
 import org.store.springbootbookstore.service.BookService;
 
 @Tag(name = "Books", description = "CRUD operations for managing books")

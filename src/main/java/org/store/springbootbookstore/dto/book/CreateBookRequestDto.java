@@ -1,4 +1,4 @@
-package org.store.springbootbookstore.dto;
+package org.store.springbootbookstore.dto.book;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
