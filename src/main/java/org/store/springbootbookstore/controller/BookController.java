@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,6 +28,7 @@ import org.store.springbootbookstore.service.BookService;
 public class BookController {
     private final BookService bookService;
 
+    @PreAuthorize("hasAnyAuthority('ADMIN','USER')")
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Get all books",
@@ -35,6 +37,7 @@ public class BookController {
         return bookService.findAll(pageable);
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new book",
@@ -43,6 +46,7 @@ public class BookController {
         return bookService.save(requestDto);
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN','USER')")
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Get book by ID",
@@ -51,6 +55,7 @@ public class BookController {
         return bookService.findById(id);
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete book",
@@ -59,6 +64,7 @@ public class BookController {
         bookService.deleteById(id);
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Update book",
