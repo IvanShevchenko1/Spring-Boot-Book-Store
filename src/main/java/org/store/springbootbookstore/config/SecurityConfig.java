@@ -56,7 +56,11 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration authenticationConfiguration
-    ) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    ) {
+        try {
+            return authenticationConfiguration.getAuthenticationManager();
+        } catch (Exception ex) {
+            throw new IllegalStateException("Failed to obtain AuthenticationManager", ex);
+        }
     }
 }
