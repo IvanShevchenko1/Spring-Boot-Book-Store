@@ -10,9 +10,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.store.springbootbookstore.dto.user.UserLoginRequestDto;
+import org.store.springbootbookstore.dto.user.UserLoginResponseDto;
 import org.store.springbootbookstore.dto.user.UserRegistrationRequestDto;
 import org.store.springbootbookstore.dto.user.UserResponseDto;
 import org.store.springbootbookstore.exception.RegistrationException;
+import org.store.springbootbookstore.security.AuthenticationService;
 import org.store.springbootbookstore.service.UserService;
 
 @Tag(name = "Authentication Endpoint",
@@ -22,6 +25,7 @@ import org.store.springbootbookstore.service.UserService;
 @RequestMapping("/auth")
 public class AuthenticationController {
     private final UserService userService;
+    private final AuthenticationService authenticationService;
 
     @PostMapping("/registration")
     @ResponseStatus(HttpStatus.CREATED)
@@ -30,6 +34,14 @@ public class AuthenticationController {
             @RequestBody @Valid UserRegistrationRequestDto request)
             throws RegistrationException {
         return userService.register(request);
+    }
+
+    @PostMapping("/login")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Login endpoint for registered users",
+            description = "Login with valid credentials and receive JWT token")
+    public UserLoginResponseDto login(@RequestBody @Valid UserLoginRequestDto request) {
+        return authenticationService.authenticate(request);
     }
 
 }
