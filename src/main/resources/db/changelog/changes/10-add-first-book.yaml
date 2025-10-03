@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-basic-admin-user
+      author: Ivan
+      changes:
+        - insert:
+            tableName: books
+            columns:
+              - column: { name: title,             value: "TheUniqueBook" }
+              - column: { name: author,          value: "John Doe" }
+              - column: { name: isbn,        value: "123456" }
+              - column: { name: price,         value: "50" }
+              - column: { name: description,         value: "Cool Book" }
+              - column: { name: cover_image,         value: "Cover Image" }
+              - column: { name: is_deleted,        valueBoolean: false }
+        - insert:
+            tableName: books_categories
+            columns:
+              - column:
+                  name: book_id
+                  valueComputed: "(SELECT id FROM books WHERE title = 'TheUniqueBook')"
+              - column:
+                  name: category_id
+                  valueComputed: "(SELECT id FROM categories WHERE name = 'Novel')"

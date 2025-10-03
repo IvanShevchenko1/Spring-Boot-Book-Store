@@ -3,6 +3,7 @@ package org.store.springbootbookstore.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.store.springbootbookstore.dto.book.BookDto;
+import org.store.springbootbookstore.dto.book.BookDtoWithoutCategories;
 import org.store.springbootbookstore.dto.book.CreateBookRequestDto;
 
 public interface BookService {
@@ -15,4 +16,6 @@ public interface BookService {
     void deleteById(Long id);
 
     BookDto updateById(Long id, CreateBookRequestDto requestDto);
+
+    Page<BookDtoWithoutCategories> findAllByCategoryId(Long id, Pageable pageable);
 }

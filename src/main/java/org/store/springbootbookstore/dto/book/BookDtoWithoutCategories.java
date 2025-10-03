@@ -1,16 +1,14 @@
 package org.store.springbootbookstore.dto.book;
 
 import java.math.BigDecimal;
-import java.util.List;
 
-public record BookDto(
+public record BookDtoWithoutCategories(
         Long id,
         String title,
         String author,
         String isbn,
         BigDecimal price,
         String description,
-        String coverImage,
-        List<Long> categoriesIds
-) {
+        String coverImage
+){
 }

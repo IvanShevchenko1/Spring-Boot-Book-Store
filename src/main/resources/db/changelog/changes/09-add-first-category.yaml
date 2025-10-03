@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-first-category
+      author: Ivan
+      changes:
+        - insert:
+            tableName: categories
+            columns:
+              - column: { name: name, value: "Novel" }
+              - column: { name: description, value: "a fictitious prose narrative of book length, 
+              typically representing character and action with some degree of realism."}

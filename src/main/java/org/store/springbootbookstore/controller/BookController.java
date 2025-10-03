@@ -69,7 +69,7 @@ public class BookController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Update book",
             description = "Update an existing book with new details by its ID")
-    private BookDto updateBook(@PathVariable Long id,
+    public BookDto updateBook(@PathVariable Long id,
                                @RequestBody @Valid CreateBookRequestDto requestDto) {
         return bookService.updateById(id, requestDto);
     }

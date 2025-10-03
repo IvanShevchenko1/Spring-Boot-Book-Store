@@ -7,7 +7,7 @@ databaseChangeLog:
             tableName: users
             columns:
               - column: { name: email,             value: "admin@example.com" }
-              - column: { name: password,          value: "$2a$10$hD7u6bQ1gQ7cA3rV1Gy4SOeGgOToZXUMsn5h8mjUI7sk62ChcF3Vi" }
+              - column: { name: password,          value: "$2a$10$LHALPCL7iBHmtLScvooVau5N3.mQ8fDano4UM9b55Vo9EA6tYdKoS" }
               - column: { name: first_name,        value: "Basic" }
               - column: { name: last_name,         value: "Admin" }
               - column: { name: is_deleted,        valueBoolean: false }

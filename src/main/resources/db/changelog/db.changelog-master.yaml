@@ -11,3 +11,11 @@ databaseChangeLog:
       file: db/changelog/changes/05-add-basic-roles.yaml
   - include:
       file: db/changelog/changes/06-add-basic-admin.yaml
+  - include:
+      file: db/changelog/changes/07-create-category-table.yaml
+  - include:
+      file: db/changelog/changes/08-create-categories-books-table.yaml
+  - include:
+      file: db/changelog/changes/09-add-first-category.yaml
+  - include:
+      file: db/changelog/changes/10-add-first-book.yaml
