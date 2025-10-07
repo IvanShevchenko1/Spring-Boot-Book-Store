@@ -16,7 +16,6 @@ import org.store.springbootbookstore.service.CategoryService;
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
-
     private final CategoryMapper categoryMapper;
 
     @Override
