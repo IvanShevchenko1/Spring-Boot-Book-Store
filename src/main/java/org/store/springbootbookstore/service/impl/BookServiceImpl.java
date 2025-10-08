@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.store.springbootbookstore.dto.book.BookDto;
+import org.store.springbootbookstore.dto.book.BookDtoWithoutCategories;
 import org.store.springbootbookstore.dto.book.CreateBookRequestDto;
 import org.store.springbootbookstore.exception.EntityNotFoundException;
 import org.store.springbootbookstore.mapper.BookMapper;
@@ -42,6 +43,7 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public void deleteById(Long id) {
+
         bookRepository.deleteById(id);
     }
 
@@ -51,5 +53,11 @@ public class BookServiceImpl implements BookService {
                 .orElseThrow(() -> new EntityNotFoundException("Can't find book by id: " + id));
         bookMapper.updateEntity(requestDto, book);
         return bookMapper.toDto(bookRepository.save(book));
+    }
+
+    @Override
+    public Page<BookDtoWithoutCategories> findAllByCategoryId(Long id, Pageable pageable) {
+        return bookRepository.findBooksByCategories_Id(id, pageable)
+                .map(bookMapper::toDtoWithoutCategories);
     }
 }
