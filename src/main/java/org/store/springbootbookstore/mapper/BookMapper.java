@@ -5,6 +5,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Mappings;
+import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.store.springbootbookstore.config.MapperConfig;
 import org.store.springbootbookstore.dto.book.BookDto;
@@ -34,4 +35,9 @@ public interface BookMapper {
             source = "categoriesIds",
             qualifiedByName = "idsToCategories")
     void updateEntity(CreateBookRequestDto dto, @MappingTarget Book entity);
+
+    @Named("bookFromId")
+    default Book bookFromId(Long id) {
+        return new Book(id);
+    }
 }

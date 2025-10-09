@@ -1,16 +1,21 @@
 package org.store.springbootbookstore.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.store.springbootbookstore.dto.user.UserRegistrationRequestDto;
 import org.store.springbootbookstore.dto.user.UserResponseDto;
+import org.store.springbootbookstore.exception.EntityNotFoundException;
 import org.store.springbootbookstore.exception.RegistrationException;
 import org.store.springbootbookstore.mapper.UserMapper;
 import org.store.springbootbookstore.model.Role;
+import org.store.springbootbookstore.model.ShoppingCart;
 import org.store.springbootbookstore.model.User;
 import org.store.springbootbookstore.repository.RoleRepository;
+import org.store.springbootbookstore.repository.ShoppingCartRepository;
 import org.store.springbootbookstore.repository.UserRepository;
 import org.store.springbootbookstore.service.UserService;
 
@@ -19,6 +24,7 @@ import org.store.springbootbookstore.service.UserService;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final ShoppingCartRepository shoppingCartRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
@@ -42,6 +48,29 @@ public class UserServiceImpl implements UserService {
         user.getRoles().add(userRole);
 
         User saved = userRepository.save(user);
+
+        ShoppingCart shoppingCart = new ShoppingCart();
+        shoppingCart.setUser(saved);
+        shoppingCartRepository.save(shoppingCart);
+
         return userMapper.toDto(saved);
+    }
+
+    @Override
+    public Long getUserIdByEmail(String email) {
+        User user = userRepository.getUserByEmail(email);
+        return user.getId();
+    }
+
+    @Override
+    public ShoppingCart getShoppingCartOfCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Long userIdByEmail = getUserIdByEmail(authentication.getName());
+        return shoppingCartRepository.findByUserId(userIdByEmail)
+                        .orElseThrow(
+                        () -> new EntityNotFoundException(
+                                "Can't find shopping cart by user id: " + userIdByEmail
+                        )
+                );
     }
 }
