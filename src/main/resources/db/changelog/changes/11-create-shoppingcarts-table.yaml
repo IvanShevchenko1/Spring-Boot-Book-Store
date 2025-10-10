@@ -9,16 +9,9 @@ databaseChangeLog:
               - column:
                   name: id
                   type: BIGINT
-                  autoIncrement: true
                   constraints:
                     primaryKey: true
                     nullable: false
-              - column:
-                  name: users_id
-                  type: BIGINT
-                  constraints:
-                    nullable: false
-                    unique: true
               - column:
                   name: is_deleted
                   type: BIT(1)
@@ -28,7 +21,7 @@ databaseChangeLog:
 
         - addForeignKeyConstraint:
              baseTableName: shopping_carts
-             baseColumnNames: users_id
+             baseColumnNames: id
              constraintName: fk_shopping_carts_user
              referencedTableName: users
              referencedColumnNames: id

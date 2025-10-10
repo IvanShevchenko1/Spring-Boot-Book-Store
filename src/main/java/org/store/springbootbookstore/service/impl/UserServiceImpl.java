@@ -48,29 +48,27 @@ public class UserServiceImpl implements UserService {
         user.getRoles().add(userRole);
 
         User saved = userRepository.save(user);
-
-        ShoppingCart shoppingCart = new ShoppingCart();
-        shoppingCart.setUser(saved);
-        shoppingCartRepository.save(shoppingCart);
-
+        createCartForUser(saved);
         return userMapper.toDto(saved);
-    }
-
-    @Override
-    public Long getUserIdByEmail(String email) {
-        User user = userRepository.getUserByEmail(email);
-        return user.getId();
     }
 
     @Override
     public ShoppingCart getShoppingCartOfCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Long userIdByEmail = getUserIdByEmail(authentication.getName());
-        return shoppingCartRepository.findByUserId(userIdByEmail)
+        User authenticatedUser = (User) authentication.getPrincipal();
+        return shoppingCartRepository.findByUserId(authenticatedUser.getId())
                         .orElseThrow(
                         () -> new EntityNotFoundException(
-                                "Can't find shopping cart by user id: " + userIdByEmail
+                                "Can't find shopping cart by user id: "
+                                        + authenticatedUser.getId()
                         )
                 );
+    }
+
+    @Override
+    public void createCartForUser(User user) {
+        ShoppingCart shoppingCart = new ShoppingCart();
+        shoppingCart.setUser(user);
+        shoppingCartRepository.save(shoppingCart);
     }
 }

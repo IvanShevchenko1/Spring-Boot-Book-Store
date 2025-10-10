@@ -15,11 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.store.springbootbookstore.dto.cartitem.CartItemResponseDto;
 import org.store.springbootbookstore.dto.cartitem.CreateCartItemRequestDto;
 import org.store.springbootbookstore.dto.cartitem.UpdateQuantityCartItemDto;
 import org.store.springbootbookstore.dto.shoppingcart.ShoppingCartResponserDto;
-import org.store.springbootbookstore.service.CartItemService;
 import org.store.springbootbookstore.service.ShoppingCartService;
 
 @Tag(name = "Carts",
@@ -29,7 +27,6 @@ import org.store.springbootbookstore.service.ShoppingCartService;
 @RequestMapping("/carts")
 public class ShoppingCartController {
     private final ShoppingCartService shoppingCartService;
-    private final CartItemService cartItemService;
 
     @PreAuthorize("hasAnyAuthority('ADMIN','USER')")
     @GetMapping
@@ -45,9 +42,9 @@ public class ShoppingCartController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Add a book to a shopping cart",
             description = "Create a new cart item and attach it to a shopping cart")
-    public CartItemResponseDto createNewItem(
+    public ShoppingCartResponserDto createNewItem(
             @RequestBody @Valid CreateCartItemRequestDto requestDto) {
-        return cartItemService.createNewItem(requestDto);
+        return shoppingCartService.createNewItem(requestDto);
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','USER')")
@@ -55,9 +52,9 @@ public class ShoppingCartController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Update cart item",
             description = "Update an existing cart item with new quantity by its ID")
-    public CartItemResponseDto updateCartItemQuantity(@PathVariable Long id,
+    public ShoppingCartResponserDto updateCartItemQuantity(@PathVariable Long id,
                               @RequestBody @Valid UpdateQuantityCartItemDto requestDto) {
-        return cartItemService.updateById(id, requestDto);
+        return shoppingCartService.updateById(id, requestDto);
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN','USER')")
@@ -66,6 +63,6 @@ public class ShoppingCartController {
     @Operation(summary = "Delete cart item",
             description = "Remove a cart item from the store by its ID")
     public void deleteCartItemById(@PathVariable Long id) {
-        cartItemService.deleteById(id);
+        shoppingCartService.deleteById(id);
     }
 }
