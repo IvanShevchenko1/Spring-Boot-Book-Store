@@ -17,9 +17,11 @@ import org.store.springbootbookstore.model.User;
 import org.store.springbootbookstore.repository.RoleRepository;
 import org.store.springbootbookstore.repository.ShoppingCartRepository;
 import org.store.springbootbookstore.repository.UserRepository;
+import org.store.springbootbookstore.service.ShoppingCartService;
 import org.store.springbootbookstore.service.UserService;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
@@ -27,6 +29,7 @@ public class UserServiceImpl implements UserService {
     private final ShoppingCartRepository shoppingCartRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final ShoppingCartService shoppingCartService;
 
     @Override
     @Transactional
@@ -47,9 +50,9 @@ public class UserServiceImpl implements UserService {
                         "Default role USER is missing. Add roles first."));
         user.getRoles().add(userRole);
 
-        User saved = userRepository.save(user);
-        createCartForUser(saved);
-        return userMapper.toDto(saved);
+        userRepository.save(user);
+        shoppingCartService.createCartForUser(user);
+        return userMapper.toDto(user);
     }
 
     @Override
@@ -63,12 +66,5 @@ public class UserServiceImpl implements UserService {
                                         + authenticatedUser.getId()
                         )
                 );
-    }
-
-    @Override
-    public void createCartForUser(User user) {
-        ShoppingCart shoppingCart = new ShoppingCart();
-        shoppingCart.setUser(user);
-        shoppingCartRepository.save(shoppingCart);
     }
 }
