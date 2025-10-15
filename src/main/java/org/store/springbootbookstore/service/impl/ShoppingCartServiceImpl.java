@@ -17,7 +17,6 @@ import org.store.springbootbookstore.model.ShoppingCart;
 import org.store.springbootbookstore.model.User;
 import org.store.springbootbookstore.repository.CartItemRepository;
 import org.store.springbootbookstore.repository.ShoppingCartRepository;
-import org.store.springbootbookstore.repository.UserRepository;
 import org.store.springbootbookstore.service.ShoppingCartService;
 
 @Service
@@ -28,18 +27,16 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     private final CartItemMapper cartItemMapper;
     private final CartItemRepository cartItemRepository;
     private final ShoppingCartRepository shoppingCartRepository;
-    private final UserRepository userRepository;
 
     @Override
     public ShoppingCartResponserDto getShoppingCart() {
-        ShoppingCart cart = getOrCreateCurrentUserCart();
+        ShoppingCart cart = getCartForCurrentUser();
         return shoppingCartMapper.toDto(cart);
     }
 
     @Override
     public ShoppingCartResponserDto createNewItem(CreateCartItemRequestDto requestDto) {
-        ShoppingCart cart = getOrCreateCurrentUserCart();
-
+        ShoppingCart cart = getCartForCurrentUser();
         Optional<CartItem> existingOpt =
                 cartItemRepository.findByShoppingCartIdAndBookId(cart.getId(), requestDto.bookId());
 
@@ -50,7 +47,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
             existing.setQuantity(newQty);
             toSave = existing;
         } else {
-            CartItem newItem = cartItemMapper.toModel(requestDto); // maps bookId -> Book
+            CartItem newItem = cartItemMapper.toModel(requestDto);
             newItem.setShoppingCart(cart);
             toSave = newItem;
         }
@@ -61,22 +58,26 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
 
     @Override
     public ShoppingCartResponserDto updateById(Long id, UpdateQuantityCartItemDto requestDto) {
-        ShoppingCart cart = getOrCreateCurrentUserCart();
+        ShoppingCart cart = getCartForCurrentUser();
+
         CartItem cartItem = cartItemRepository.findByIdAndShoppingCartId(id, cart.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Can't find cart item by id: "
                         + id));
 
         cartItemMapper.updateEntity(requestDto, cartItem);
         cartItemRepository.save(cartItem);
+
         return shoppingCartMapper.toDto(cart);
     }
 
     @Override
     public void deleteById(Long id) {
-        ShoppingCart cart = getOrCreateCurrentUserCart();
+        ShoppingCart cart = getCartForCurrentUser();
+
         CartItem cartItem = cartItemRepository.findByIdAndShoppingCartId(id, cart.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Can't find cart item by id: "
                         + id));
+
         cartItemRepository.delete(cartItem);
     }
 
@@ -87,23 +88,11 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         shoppingCartRepository.save(cart);
     }
 
-    private ShoppingCart getOrCreateCurrentUserCart() {
-        User user = getCurrentUser();
-        Optional<ShoppingCart> cartOpt = shoppingCartRepository.findByUserId(user.getId());
-        if (cartOpt.isPresent()) {
-            return cartOpt.get();
-        }
-        ShoppingCart cart = new ShoppingCart();
-        cart.setUser(user);
-        return shoppingCartRepository.save(cart);
-    }
-
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder
-                .getContext().getAuthentication();
-        User authenticatedUser = (User) authentication.getPrincipal();
-        return userRepository.findById(authenticatedUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("User not found by id: "
-                        + authenticatedUser.getId()));
+    private ShoppingCart getCartForCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        return shoppingCartRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Can't find cart by user id: "
+                        + user.getId()));
     }
 }
