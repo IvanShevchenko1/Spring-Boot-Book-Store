@@ -18,6 +18,4 @@ public interface ShoppingCartService {
     void createCartForUser(User user);
 
     ShoppingCart getCartForCurrentUser();
-
-    void emptyCartForCurrentUser();
 }

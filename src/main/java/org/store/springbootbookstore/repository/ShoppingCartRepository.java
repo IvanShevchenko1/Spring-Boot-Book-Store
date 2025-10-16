@@ -7,5 +7,4 @@ import org.store.springbootbookstore.model.ShoppingCart;
 public interface ShoppingCartRepository extends JpaRepository<ShoppingCart, Long> {
     Optional<ShoppingCart> findByUserId(Long userId);
 
-    void removeAllCartItemsByUserId(Long userId);
 }

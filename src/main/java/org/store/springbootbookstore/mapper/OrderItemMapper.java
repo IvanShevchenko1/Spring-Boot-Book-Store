@@ -5,14 +5,15 @@ import org.store.springbootbookstore.config.MapperConfig;
 import org.store.springbootbookstore.dto.orderItem.OrderItemResponseDto;
 import org.store.springbootbookstore.model.CartItem;
 import org.store.springbootbookstore.model.OrderItem;
+import org.store.springbootbookstore.repository.BookRepository;
 
 import java.math.BigDecimal;
 
 @Mapper(config = MapperConfig.class)
 public interface OrderItemMapper {
     @Mappings({
-            @Mapping(target = "bookId",
-            source = "book.id"),
+            @Mapping(target = "bookId", source = "book.id"),
+            @Mapping(target = "id", ignore = true),
     })
     OrderItemResponseDto toDto(OrderItem model);
 

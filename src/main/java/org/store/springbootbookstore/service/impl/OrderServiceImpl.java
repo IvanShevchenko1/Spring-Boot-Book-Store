@@ -8,17 +8,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.store.springbootbookstore.dto.order.CreateOrderRequestDto;
 import org.store.springbootbookstore.dto.order.OrderResponseDto;
-import org.store.springbootbookstore.exception.EmptyShopCartException;
+import org.store.springbootbookstore.exception.EntityNotFoundException;
 import org.store.springbootbookstore.mapper.OrderItemMapper;
 import org.store.springbootbookstore.mapper.OrderMapper;
-import org.store.springbootbookstore.model.Order;
-import org.store.springbootbookstore.model.OrderItem;
-import org.store.springbootbookstore.model.ShoppingCart;
-import org.store.springbootbookstore.model.User;
+import org.store.springbootbookstore.model.*;
+import org.store.springbootbookstore.repository.BookRepository;
 import org.store.springbootbookstore.repository.OrderRepository;
+import org.store.springbootbookstore.repository.ShoppingCartRepository;
 import org.store.springbootbookstore.service.OrderService;
 import org.store.springbootbookstore.service.ShoppingCartService;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -31,6 +29,8 @@ public class OrderServiceImpl implements OrderService {
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
     private final ShoppingCartService shoppingCartService;
+    private final ShoppingCartRepository shoppingCartRepository;
+    private final BookRepository bookRepository;
 
     @Override
     public Page<OrderResponseDto> getAllForCurrentUser(Pageable pageable) {
@@ -41,24 +41,43 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponseDto createOrder(CreateOrderRequestDto requestDto) {
-        Order order = new Order();
         ShoppingCart shoppingCart = shoppingCartService.getCartForCurrentUser();
         if (shoppingCart.getCartItems().isEmpty()) {
-            throw new EmptyShopCartException("Shopping cart is empty");
+            throw new EntityNotFoundException("No shopping cart items found");
         }
-        order.setOrderItems((shoppingCart.getCartItems()
-                .stream()
-                .map(orderItemMapper::fromCartItemToOrderItem)
-                .peek(orderItem -> orderItem.setOrder(order))
-                .collect(Collectors.toSet())));
-        order.setShippingAddress(requestDto.shippingAddress());
+
+        Order order = new Order();
+        order.setUser(shoppingCart.getUser());
         order.setOrderDate(LocalDateTime.now());
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        order.setUser((User) auth.getPrincipal());
         order.setStatus(Order.Status.PENDING);
-        order.setTotal(getTotalPrice(order.getOrderItems()));
-        shoppingCartService.emptyCartForCurrentUser();
-        return orderMapper.toDto(orderRepository.save(order));
+        order.setShippingAddress(requestDto.shippingAddress());
+
+        Set<OrderItem> orderItems = shoppingCart.getCartItems().stream()
+                .map(cartItem -> {
+                    OrderItem orderItem = orderItemMapper.fromCartItemToOrderItem(cartItem);
+
+                    Long bookId = cartItem.getBook().getId();
+                    orderItem.setBook(new Book(bookId));
+
+                    orderItem.setOrder(order);
+
+                    BigDecimal totalPrice = cartItem.getBook().getPrice()
+                            .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+                    orderItem.setPrice(totalPrice);
+
+                    return orderItem;
+                })
+                .collect(Collectors.toSet());
+
+        order.setOrderItems(orderItems);
+        order.setTotal(getTotalPrice(orderItems));
+
+        Order saved = orderRepository.save(order);
+
+        shoppingCart.getCartItems().clear();
+        shoppingCartRepository.save(shoppingCart);
+
+        return orderMapper.toDto(saved);
     }
 
 
