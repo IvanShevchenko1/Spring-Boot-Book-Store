@@ -88,11 +88,19 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         shoppingCartRepository.save(cart);
     }
 
-    private ShoppingCart getCartForCurrentUser() {
+    @Override
+    public ShoppingCart getCartForCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) authentication.getPrincipal();
         return shoppingCartRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Can't find cart by user id: "
                         + user.getId()));
+    }
+
+    @Override
+    public void emptyCartForCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        shoppingCartRepository.removeAllCartItemsByUserId(user.getId());
     }
 }
