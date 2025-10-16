@@ -1,10 +1,10 @@
 package org.store.springbootbookstore.dto.order;
 
-import org.store.springbootbookstore.dto.orderItem.OrderItemResponseDto;
-import org.store.springbootbookstore.model.Order;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;
+import org.store.springbootbookstore.dto.orderitem.OrderItemResponseDto;
+import org.store.springbootbookstore.model.Order;
 
 public record OrderResponseDto(
         Long id,

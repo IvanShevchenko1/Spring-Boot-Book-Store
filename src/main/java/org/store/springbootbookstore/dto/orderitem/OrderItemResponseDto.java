@@ -1,4 +1,4 @@
-package org.store.springbootbookstore.dto.orderItem;
+package org.store.springbootbookstore.dto.orderitem;
 
 public record OrderItemResponseDto(
         Long id,

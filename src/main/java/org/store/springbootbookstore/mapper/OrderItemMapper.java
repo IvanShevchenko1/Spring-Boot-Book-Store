@@ -1,23 +1,27 @@
 package org.store.springbootbookstore.mapper;
 
-import org.mapstruct.*;
+import java.math.BigDecimal;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.Mappings;
 import org.store.springbootbookstore.config.MapperConfig;
-import org.store.springbootbookstore.dto.orderItem.OrderItemResponseDto;
+import org.store.springbootbookstore.dto.orderitem.OrderItemResponseDto;
 import org.store.springbootbookstore.model.CartItem;
 import org.store.springbootbookstore.model.OrderItem;
-import org.store.springbootbookstore.repository.BookRepository;
-
-import java.math.BigDecimal;
 
 @Mapper(config = MapperConfig.class)
 public interface OrderItemMapper {
     @Mappings({
             @Mapping(target = "bookId", source = "book.id"),
-            @Mapping(target = "id", ignore = true),
     })
     OrderItemResponseDto toDto(OrderItem model);
 
-    @Mapping(target = "order", ignore = true)
+    @Mappings({
+            @Mapping(target = "order", ignore = true),
+            @Mapping(target = "id", ignore = true)
+    })
     OrderItem fromCartItemToOrderItem(CartItem cartItem);
 
     @AfterMapping
@@ -26,5 +30,4 @@ public interface OrderItemMapper {
         int quantity = cartItem.getQuantity();
         orderItem.setPrice(unitPrice.multiply(BigDecimal.valueOf(quantity)));
     }
-
 }
