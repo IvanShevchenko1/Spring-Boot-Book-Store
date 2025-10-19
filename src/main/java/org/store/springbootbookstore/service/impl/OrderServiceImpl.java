@@ -1,5 +1,6 @@
 package org.store.springbootbookstore.service.impl;
 
+import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -46,6 +47,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDto createOrder(CreateOrderRequestDto requestDto) {
         ShoppingCart shoppingCart = shoppingCartService.getCartForCurrentUser();
         if (shoppingCart.getCartItems().isEmpty()) {
@@ -74,6 +76,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDto patchOrder(Long id, PatchOrderRequestDto requestDto) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Can't find order by id: " + id));

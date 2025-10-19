@@ -20,7 +20,7 @@ import org.store.springbootbookstore.repository.ShoppingCartRepository;
 import org.store.springbootbookstore.service.ShoppingCartService;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ShoppingCartServiceImpl implements ShoppingCartService {
     private final ShoppingCartMapper shoppingCartMapper;
@@ -35,6 +35,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     }
 
     @Override
+    @Transactional
     public ShoppingCartResponserDto createNewItem(CreateCartItemRequestDto requestDto) {
         ShoppingCart cart = getCartForCurrentUser();
         Optional<CartItem> existingOpt =
@@ -57,6 +58,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     }
 
     @Override
+    @Transactional
     public ShoppingCartResponserDto updateById(Long id, UpdateQuantityCartItemDto requestDto) {
         ShoppingCart cart = getCartForCurrentUser();
 
@@ -71,6 +73,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     }
 
     @Override
+    @Transactional
     public void deleteById(Long id) {
         ShoppingCart cart = getCartForCurrentUser();
 
@@ -82,6 +85,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     }
 
     @Override
+    @Transactional
     public void createCartForUser(User user) {
         ShoppingCart cart = new ShoppingCart();
         cart.setUser(user);
