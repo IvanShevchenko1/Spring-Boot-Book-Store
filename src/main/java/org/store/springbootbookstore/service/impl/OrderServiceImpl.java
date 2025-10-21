@@ -16,6 +16,7 @@ import org.store.springbootbookstore.dto.order.OrderResponseDto;
 import org.store.springbootbookstore.dto.order.PatchOrderRequestDto;
 import org.store.springbootbookstore.dto.orderitem.OrderItemResponseDto;
 import org.store.springbootbookstore.exception.EntityNotFoundException;
+import org.store.springbootbookstore.exception.OrderProcessingException;
 import org.store.springbootbookstore.mapper.OrderItemMapper;
 import org.store.springbootbookstore.mapper.OrderMapper;
 import org.store.springbootbookstore.model.Order;
@@ -51,7 +52,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponseDto createOrder(CreateOrderRequestDto requestDto) {
         ShoppingCart shoppingCart = shoppingCartService.getCartForCurrentUser();
         if (shoppingCart.getCartItems().isEmpty()) {
-            throw new EntityNotFoundException("No shopping cart items found");
+            throw new OrderProcessingException("No shopping cart items found");
         }
 
         Order order = orderMapper.toModel(requestDto);
