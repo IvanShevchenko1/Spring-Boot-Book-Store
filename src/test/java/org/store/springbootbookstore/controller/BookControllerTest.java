@@ -23,7 +23,7 @@ import org.store.springbootbookstore.dto.book.BookDto;
 import org.store.springbootbookstore.dto.book.CreateBookRequestDto;
 import org.store.springbootbookstore.security.JwtUtil;
 import org.store.springbootbookstore.service.BookService;
-import java.math.BigDecimal;
+import org.store.springbootbookstore.util.TestUtil;
 import java.util.List;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.eq;
@@ -69,41 +69,6 @@ class BookControllerTest {
         }
     }
 
-    private BookDto sampleBookDto(Long id) {
-        return new BookDto(
-                id,
-                "Clean Code",
-                "Robert C. Martin",
-                "9780132350884",
-                new BigDecimal("39.99"),
-                "A Handbook of Agile Software Craftsmanship",
-                "https://example.com/cover.png",
-                List.of(1L, 2L)
-        );
-    }
-
-    private CreateBookRequestDto validCreateRequest() {
-        CreateBookRequestDto dto = new CreateBookRequestDto();
-        dto.setTitle("Clean Code");
-        dto.setAuthor("Robert C. Martin");
-        dto.setIsbn("9780132350884");
-        dto.setPrice(new BigDecimal("39.99"));
-        dto.setDescription("A Handbook of Agile Software Craftsmanship");
-        dto.setCoverImage("https://example.com/cover.png");
-        dto.setCategoriesIds(List.of(1L, 2L));
-        return dto;
-    }
-
-    private CreateBookRequestDto invalidCreateRequestMissingTitle() {
-        CreateBookRequestDto dto = new CreateBookRequestDto();
-        dto.setTitle(" ");
-        dto.setAuthor("Robert C. Martin");
-        dto.setIsbn("9780132350884");
-        dto.setPrice(new BigDecimal("39.99"));
-        dto.setCategoriesIds(List.of(1L));
-        return dto;
-    }
-
     @Test
     @DisplayName("GET /books without authentication -> 401 Unauthorized (security filter active)")
     void getAll_unauthenticated_returns401() throws Exception {
@@ -118,7 +83,7 @@ class BookControllerTest {
     @WithMockUser(authorities = {"USER"})
     void getAll_withUser_returnsOk() throws Exception {
         Page<BookDto> page = new PageImpl<>(
-                List.of(sampleBookDto(1L), sampleBookDto(2L)),
+                List.of(TestUtil.sampleBookDto(1L), TestUtil.sampleBookDto(2L)),
                 PageRequest.of(0, 20),
                 2
         );
@@ -140,7 +105,7 @@ class BookControllerTest {
     @DisplayName("GET /books/{id} with USER authority -> 200 OK")
     @WithMockUser(authorities = {"USER"})
     void getById_withUser_returnsOk() throws Exception {
-        when(bookService.findById(10L)).thenReturn(sampleBookDto(10L));
+        when(bookService.findById(10L)).thenReturn(TestUtil.sampleBookDto(10L));
 
         mockMvc.perform(get("/books/{id}", 10L))
                 .andExpect(status().isOk())
@@ -156,9 +121,9 @@ class BookControllerTest {
     @DisplayName("POST /books with ADMIN authority -> 201 Created")
     @WithMockUser(authorities = {"ADMIN"})
     void create_withAdmin_returnsCreated() throws Exception {
-        CreateBookRequestDto req = validCreateRequest();
+        CreateBookRequestDto req = TestUtil.validCreateRequest();
         when(bookService.save(ArgumentMatchers.any(CreateBookRequestDto.class)))
-                .thenReturn(sampleBookDto(1L));
+                .thenReturn(TestUtil.sampleBookDto(1L));
 
         mockMvc.perform(post("/books")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -177,7 +142,7 @@ class BookControllerTest {
     @DisplayName("POST /books with USER authority -> 403 Forbidden")
     @WithMockUser(authorities = {"USER"})
     void create_withUser_forbidden() throws Exception {
-        CreateBookRequestDto req = validCreateRequest();
+        CreateBookRequestDto req = TestUtil.validCreateRequest();
 
         mockMvc.perform(post("/books")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -191,7 +156,7 @@ class BookControllerTest {
     @DisplayName("POST /books with ADMIN authority and invalid body -> 400 Bad Request")
     @WithMockUser(authorities = {"ADMIN"})
     void create_withAdmin_invalidBody_returnsBadRequest() throws Exception {
-        CreateBookRequestDto req = invalidCreateRequestMissingTitle();
+        CreateBookRequestDto req = TestUtil.invalidCreateRequestMissingTitle();
 
         mockMvc.perform(post("/books")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -205,9 +170,9 @@ class BookControllerTest {
     @DisplayName("PUT /books/{id} with ADMIN authority -> 200 OK")
     @WithMockUser(authorities = {"ADMIN"})
     void update_withAdmin_returnsOk() throws Exception {
-        CreateBookRequestDto req = validCreateRequest();
+        CreateBookRequestDto req = TestUtil.validCreateRequest();
         when(bookService.updateById(eq(5L), ArgumentMatchers.any(CreateBookRequestDto.class)))
-                .thenReturn(sampleBookDto(5L));
+                .thenReturn(TestUtil.sampleBookDto(5L));
 
         mockMvc.perform(put("/books/{id}", 5L)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -226,7 +191,7 @@ class BookControllerTest {
     @DisplayName("PUT /books/{id} with USER authority -> 403 Forbidden")
     @WithMockUser(authorities = {"USER"})
     void update_withUser_forbidden() throws Exception {
-        CreateBookRequestDto req = validCreateRequest();
+        CreateBookRequestDto req = TestUtil.validCreateRequest();
 
         mockMvc.perform(put("/books/{id}", 5L)
                         .contentType(MediaType.APPLICATION_JSON)

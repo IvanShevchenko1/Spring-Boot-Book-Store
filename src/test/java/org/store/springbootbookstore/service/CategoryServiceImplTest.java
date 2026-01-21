@@ -41,7 +41,7 @@ class CategoryServiceImplTest {
 
     @Test
     @DisplayName("findAll(): returns Page<CategoryResponseDto> mapped from repository results")
-    void findAll_ShouldReturnPageOfDtos() {
+    void findAll_ValidRequest_ReturnsPageOfDtos() {
         Pageable pageable = PageRequest.of(0, 2);
 
         Category c1 = new Category();
@@ -74,7 +74,7 @@ class CategoryServiceImplTest {
 
     @Test
     @DisplayName("save(): given valid request, saves entity and returns CategoryResponseDto")
-    void save_WithAValidRequest_SaveEntityAndReturnDto() {
+    void save_ValidRequest_SaveEntityAndReturnDto() {
         CreateCategoryRequestDto request = new CreateCategoryRequestDto("Kids", "Books for kids");
 
         Category toSave = new Category();
@@ -157,7 +157,7 @@ class CategoryServiceImplTest {
 
     @Test
     @DisplayName("deleteById(): calls repository.deleteById")
-    void deleteById_ShouldCallRepository() {
+    void deleteById_ValidRequest_ShouldCallRepository() {
         Long id = 7L;
 
         categoryService.deleteById(id);

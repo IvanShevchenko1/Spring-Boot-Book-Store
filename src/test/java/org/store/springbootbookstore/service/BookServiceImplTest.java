@@ -43,7 +43,7 @@ class BookServiceImplTest {
 
     @Test
     @DisplayName("save(): given valid request, returns BookDto and persists entity")
-    void save_WithAValidRequest_ReturnDto() {
+    void save_ValidRequest_ReturnsDto() {
         CreateBookRequestDto request = new CreateBookRequestDto();
         request.setTitle("Clean Code");
         request.setAuthor("Robert C. Martin");
@@ -93,7 +93,7 @@ class BookServiceImplTest {
 
     @Test
     @DisplayName("findAll(): returns Page<BookDto> mapped from repository Page<Book>")
-    void findAll_ShouldReturnPageOfDtos() {
+    void findAll_ValidRequest_ReturnsPageOfDtos() {
         Pageable pageable = PageRequest.of(0, 2);
 
         Book b1 = new Book();
@@ -178,7 +178,7 @@ class BookServiceImplTest {
 
     @Test
     @DisplayName("deleteById(): calls repository.deleteById")
-    void deleteById_ShouldCallRepository() {
+    void deleteById_ValidRequest_ShouldCallRepository() {
         Long id = 7L;
 
         bookService.deleteById(id);
@@ -261,7 +261,7 @@ class BookServiceImplTest {
 
     @Test
     @DisplayName("findAllByCategoryId(): returns Page<BookDtoWithoutCategories> mapped from repository results")
-    void findAllByCategoryId_ShouldReturnPageOfDtoWithoutCategories() {
+    void findAllByCategoryId_ValidRequest_ReturnsPageOfDtoWithoutCategories() {
         Long categoryId = 11L;
         Pageable pageable = PageRequest.of(0, 2);
 

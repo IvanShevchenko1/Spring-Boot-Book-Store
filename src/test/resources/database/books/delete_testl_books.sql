@@ -1,0 +1,1 @@
+delete from books where id = 2 - 6;
