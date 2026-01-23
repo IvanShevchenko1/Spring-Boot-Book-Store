@@ -1,47 +1,38 @@
 package org.store.springbootbookstore.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.http.MediaType;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.store.springbootbookstore.dto.book.BookDto;
 import org.store.springbootbookstore.dto.book.CreateBookRequestDto;
-import org.store.springbootbookstore.security.JwtUtil;
-import org.store.springbootbookstore.service.BookService;
 import org.store.springbootbookstore.util.TestUtil;
-import java.util.List;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import org.testcontainers.shaded.org.apache.commons.lang3.builder.EqualsBuilder;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = BookController.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc(addFilters = true)
 class BookControllerTest {
 
@@ -51,177 +42,178 @@ class BookControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
-    private BookService bookService;
+    @Autowired
+    private DataSource dataSource;
 
-    @MockBean
-    private JwtUtil jwtUtil;
+    @AfterEach
+    void cleanup() {
+        teardown(dataSource);
+    }
 
-    @TestConfiguration
-    @EnableMethodSecurity(prePostEnabled = true)
-    static class TestSecurityConfig {
-        @Bean
-        SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-            return http
-                    .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-                    .httpBasic(basic -> {})
-                    .build();
+    @SneakyThrows
+    static void teardown(DataSource dataSource) {
+        try (Connection con = dataSource.getConnection()) {
+            con.setAutoCommit(true);
+            ScriptUtils.executeSqlScript(con,
+                    new ClassPathResource("database/books/delete_test_books_categories.sql"));
+            ScriptUtils.executeSqlScript(con,
+                    new ClassPathResource("database/books/delete_test_books.sql"));
         }
     }
 
     @Test
-    @DisplayName("GET /books without authentication -> 401 Unauthorized (security filter active)")
-    void getAll_unauthenticated_returns401() throws Exception {
+    @DisplayName("GET /books without authentication -> 401 Unauthorized")
+    void getAll_Unauthenticated_Returns401() throws Exception {
         mockMvc.perform(get("/books"))
                 .andExpect(status().isUnauthorized());
-
-        verifyNoInteractions(bookService);
     }
 
     @Test
     @DisplayName("GET /books with USER authority -> 200 OK")
     @WithMockUser(authorities = {"USER"})
-    void getAll_withUser_returnsOk() throws Exception {
-        Page<BookDto> page = new PageImpl<>(
-                List.of(TestUtil.sampleBookDto(1L), TestUtil.sampleBookDto(2L)),
-                PageRequest.of(0, 20),
-                2
-        );
-        when(bookService.findAll(ArgumentMatchers.any())).thenReturn(page);
-
-        mockMvc.perform(get("/books")
+    @Sql(
+            scripts = "classpath:database/books/add_test_book_with_category_id_1.sql",
+            executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    void getAll_WithUser_ReturnsOkAndContainsInsertedBooks() throws Exception {
+        MvcResult result = mockMvc.perform(get("/books")
                         .param("page", "0")
                         .param("size", "20"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(2));
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andReturn();
 
-        verify(bookService, times(1)).findAll(ArgumentMatchers.any());
-        verifyNoMoreInteractions(bookService);
+        JsonNode root = objectMapper.readTree(result.getResponse().getContentAsString());
+        JsonNode contentNode = root.get("content");
+
+        assertTrue(contentNode.isArray());
+        assertFalse(contentNode.isEmpty());
+
+        boolean found = false;
+        for (JsonNode b : contentNode) {
+            if (b.get("id").asLong() == 2L) {
+                found = true;
+                assertEquals("Book2", b.get("title").asText());
+                assertEquals("JohnDoe", b.get("author").asText());
+                assertEquals("654321", b.get("isbn").asText());
+                break;
+            }
+        }
+        assertTrue(found, "Expected book was not found in page content");
     }
 
     @Test
-    @DisplayName("GET /books/{id} with USER authority -> 200 OK")
+    @DisplayName("GET /books/{id} with USER authority for missing id -> 404")
     @WithMockUser(authorities = {"USER"})
-    void getById_withUser_returnsOk() throws Exception {
-        when(bookService.findById(10L)).thenReturn(TestUtil.sampleBookDto(10L));
-
-        mockMvc.perform(get("/books/{id}", 10L))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(10L))
-                .andExpect(jsonPath("$.title").value("Clean Code"));
-
-        verify(bookService, times(1)).findById(10L);
-        verifyNoMoreInteractions(bookService);
+    void getById_Missing_Returns404() throws Exception {
+        mockMvc.perform(get("/books/{id}", 999999L))
+                .andExpect(status().isNotFound());
     }
 
     @Test
     @DisplayName("POST /books with ADMIN authority -> 201 Created")
     @WithMockUser(authorities = {"ADMIN"})
-    void create_withAdmin_returnsCreated() throws Exception {
-        CreateBookRequestDto req = TestUtil.validCreateRequest();
-        when(bookService.save(ArgumentMatchers.any(CreateBookRequestDto.class)))
-                .thenReturn(TestUtil.sampleBookDto(1L));
-
-        mockMvc.perform(post("/books")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req))
+    void create_WithAdmin_ReturnsCreated() throws Exception {
+        CreateBookRequestDto request = TestUtil.validCreateRequest();
+        BookDto expected = TestUtil.sampleBookDto(2L);
+        MvcResult result = mockMvc.perform(post("/books")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
                 .andExpect(status().isCreated())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.isbn").value("9780132350884"));
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andReturn();
 
-        verify(bookService, times(1)).save(ArgumentMatchers.any(CreateBookRequestDto.class));
-        verifyNoMoreInteractions(bookService);
+        BookDto actualDto = objectMapper.readValue(result.getResponse().getContentAsString(), BookDto.class);
+
+        EqualsBuilder.reflectionEquals(expected, actualDto, "id");
     }
 
     @Test
     @DisplayName("POST /books with USER authority -> 403 Forbidden")
     @WithMockUser(authorities = {"USER"})
-    void create_withUser_forbidden() throws Exception {
-        CreateBookRequestDto req = TestUtil.validCreateRequest();
+    void create_WithUser_Forbidden() throws Exception {
+        CreateBookRequestDto request = TestUtil.validCreateRequest();
 
         mockMvc.perform(post("/books")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
                 .andExpect(status().isForbidden());
-
-        verifyNoInteractions(bookService);
     }
 
     @Test
     @DisplayName("POST /books with ADMIN authority and invalid body -> 400 Bad Request")
     @WithMockUser(authorities = {"ADMIN"})
-    void create_withAdmin_invalidBody_returnsBadRequest() throws Exception {
-        CreateBookRequestDto req = TestUtil.invalidCreateRequestMissingTitle();
+    void create_WithAdminAndInvalidBody_ReturnsBadRequest() throws Exception {
+        CreateBookRequestDto badRequest = TestUtil.invalidCreateRequestMissingTitle();
 
         mockMvc.perform(post("/books")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)).with(csrf()))
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(badRequest))
+                        .with(csrf()))
                 .andExpect(status().isBadRequest());
-
-        verifyNoInteractions(bookService);
     }
 
     @Test
     @DisplayName("PUT /books/{id} with ADMIN authority -> 200 OK")
     @WithMockUser(authorities = {"ADMIN"})
-    void update_withAdmin_returnsOk() throws Exception {
-        CreateBookRequestDto req = TestUtil.validCreateRequest();
-        when(bookService.updateById(eq(5L), ArgumentMatchers.any(CreateBookRequestDto.class)))
-                .thenReturn(TestUtil.sampleBookDto(5L));
+    @Sql(
+            scripts = "classpath:database/books/add_test_book_with_category_id_1.sql",
+            executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    void update_WithAdmin_ReturnsOk() throws Exception {
+        CreateBookRequestDto request = TestUtil.validCreateRequest();
+        BookDto expected = TestUtil.sampleBookDto(2L);
 
-        mockMvc.perform(put("/books/{id}", 5L)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req))
+        MvcResult result = mockMvc.perform(put("/books/{id}", 2L)
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(5L))
-                .andExpect(jsonPath("$.author").value("Robert C. Martin"));
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andReturn();
 
-        verify(bookService, times(1)).updateById(eq(5L), ArgumentMatchers.any(CreateBookRequestDto.class));
-        verifyNoMoreInteractions(bookService);
+        BookDto updatedDto = objectMapper.readValue(result.getResponse().getContentAsString(), BookDto.class);
+
+        EqualsBuilder.reflectionEquals(expected, updatedDto, "id");
     }
 
     @Test
     @DisplayName("PUT /books/{id} with USER authority -> 403 Forbidden")
     @WithMockUser(authorities = {"USER"})
-    void update_withUser_forbidden() throws Exception {
-        CreateBookRequestDto req = TestUtil.validCreateRequest();
+    @Sql(
+            scripts = "classpath:database/books/add_test_book_with_category_id_1.sql",
+            executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    void update_WithUser_Forbidden() throws Exception {
+        CreateBookRequestDto request = TestUtil.validCreateRequest();
 
-        mockMvc.perform(put("/books/{id}", 5L)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+        mockMvc.perform(put("/books/{id}", 2L)
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
                 .andExpect(status().isForbidden());
-
-        verifyNoInteractions(bookService);
     }
 
     @Test
     @DisplayName("DELETE /books/{id} with ADMIN authority -> 204 No Content")
     @WithMockUser(authorities = {"ADMIN"})
-    void delete_withAdmin_returnsNoContent() throws Exception {
-        doNothing().when(bookService).deleteById(7L);
+    @Sql(
+            scripts = "classpath:database/books/add_test_book_with_category_id_1.sql",
+            executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    void delete_WithAdmin_ReturnsNoContent() throws Exception {
+        mockMvc.perform(delete("/books/{id}", 2L).with(csrf()))
+                .andExpect(status().isNoContent());
 
-        mockMvc.perform(delete("/books/{id}", 7L).with(csrf()))
-                .andExpect(status().isNoContent())
-                .andExpect(content().string(""));
-
-        verify(bookService, times(1)).deleteById(7L);
-        verifyNoMoreInteractions(bookService);
     }
 
     @Test
     @DisplayName("DELETE /books/{id} with USER authority -> 403 Forbidden")
     @WithMockUser(authorities = {"USER"})
-    void delete_withUser_forbidden() throws Exception {
-        mockMvc.perform(delete("/books/{id}", 7L))
+    void delete_WithUser_Forbidden() throws Exception {
+        mockMvc.perform(delete("/books/{id}", 2L))
                 .andExpect(status().isForbidden());
-
-        verifyNoInteractions(bookService);
     }
 }

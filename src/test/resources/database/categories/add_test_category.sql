@@ -1,0 +1,1 @@
+insert into categories (id, name, description) values (2, 'Test_Category', 'category');

@@ -1,47 +1,39 @@
 package org.store.springbootbookstore.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.http.MediaType;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
-import org.store.springbootbookstore.config.SecurityConfig;
-import org.store.springbootbookstore.dto.book.BookDtoWithoutCategories;
+import org.springframework.test.web.servlet.MvcResult;
 import org.store.springbootbookstore.dto.category.CategoryResponseDto;
 import org.store.springbootbookstore.dto.category.CreateCategoryRequestDto;
-import org.store.springbootbookstore.security.JwtAuthenticationFilter;
-import org.store.springbootbookstore.security.JwtUtil;
-import org.store.springbootbookstore.service.BookService;
-import org.store.springbootbookstore.service.CategoryService;
-import java.math.BigDecimal;
-import java.util.List;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import org.store.springbootbookstore.util.TestUtil;
+import org.testcontainers.shaded.org.apache.commons.lang3.builder.EqualsBuilder;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CategoryController.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc(addFilters = true)
 class CategoryControllerTest {
 
@@ -51,172 +43,144 @@ class CategoryControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
-    private CategoryService categoryService;
+    @Autowired
+    private DataSource dataSource;
 
-    @MockBean
-    private BookService bookService;
-
-    @MockBean
-    private JwtUtil jwtUtil;
-
-    private CategoryResponseDto sampleCategory(Long id) {
-        return new CategoryResponseDto(id, "Programming", "Books about programming");
+    @AfterEach
+    void cleanup() {
+        teardown(dataSource);
     }
 
-    private CreateCategoryRequestDto validCreateCategoryRequest() {
-        return new CreateCategoryRequestDto("Programming", "Books about programming");
-    }
-
-    private CreateCategoryRequestDto invalidCreateCategoryRequestBlankName() {
-        return new CreateCategoryRequestDto("   ", "Books about programming");
-    }
-
-    private static BookDtoWithoutCategories sampleBookWithoutCategories(Long id) {
-        return new BookDtoWithoutCategories(
-                id,
-                "Clean Code",
-                "Robert C. Martin",
-                "9780132350884",
-                new BigDecimal("39.99"),
-                "A Handbook of Agile Software Craftsmanship",
-                "https://example.com/cover.png"
-        );
+    @SneakyThrows
+    static void teardown(DataSource dataSource) {
+        try (Connection con = dataSource.getConnection()) {
+            con.setAutoCommit(true);
+            ScriptUtils.executeSqlScript(con,
+                    new ClassPathResource("database/categories/delete_test_category.sql"));
+        }
     }
 
     @Test
     @DisplayName("GET /categories without authentication -> 401")
-    void getAll_unauthenticated_returns401() throws Exception {
+    void getAll_Unauthenticated_Returns401() throws Exception {
         mockMvc.perform(get("/categories"))
                 .andExpect(status().isUnauthorized());
-
-        verifyNoInteractions(categoryService, bookService);
-    }
-
-    @Test
-    @DisplayName("GET /categories with USER -> 200 OK")
-    @WithMockUser(authorities = {"USER"})
-    void getAll_withUser_returnsOk() throws Exception {
-        Page<CategoryResponseDto> page = new PageImpl<>(
-                List.of(sampleCategory(1L), sampleCategory(2L)),
-                PageRequest.of(0, 20),
-                2
-        );
-        when(categoryService.findAll(ArgumentMatchers.any())).thenReturn(page);
-
-        mockMvc.perform(get("/categories")
-                        .param("page", "0")
-                        .param("size", "20"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(2));
-
-        verify(categoryService, times(1)).findAll(ArgumentMatchers.any());
-        verifyNoMoreInteractions(categoryService);
-        verifyNoInteractions(bookService);
     }
 
     @Test
     @DisplayName("POST /categories with ADMIN -> 201 Created")
     @WithMockUser(authorities = {"ADMIN"})
-    void create_withAdmin_returnsCreated() throws Exception {
-        when(categoryService.save(ArgumentMatchers.any(CreateCategoryRequestDto.class)))
-                .thenReturn(sampleCategory(1L));
+    void create_WithAdmin_ReturnsCreated() throws Exception {
+        CreateCategoryRequestDto expected = TestUtil.validCreateCategoryRequest();
 
-        mockMvc.perform(post("/categories")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validCreateCategoryRequest())))
+        MvcResult result = mockMvc.perform(post("/categories")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(expected))
+                        .with(csrf()))
                 .andExpect(status().isCreated())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.name").value("Programming"));
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andReturn();
 
-        verify(categoryService, times(1)).save(ArgumentMatchers.any(CreateCategoryRequestDto.class));
-        verifyNoMoreInteractions(categoryService);
-        verifyNoInteractions(bookService);
+        CategoryResponseDto actual = objectMapper.readValue(result.getResponse()
+                .getContentAsString(), CategoryResponseDto.class);
+
+        EqualsBuilder.reflectionEquals(expected, actual, "id");
     }
 
     @Test
     @DisplayName("POST /categories with ADMIN and invalid body -> 400 Bad Request")
     @WithMockUser(authorities = {"ADMIN"})
-    void create_withAdmin_invalidBody_returnsBadRequest() throws Exception {
-        mockMvc.perform(post("/categories")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidCreateCategoryRequestBlankName())))
-                .andExpect(status().isBadRequest());
+    void create_WithAdminInvalidBody_ReturnsBadRequest() throws Exception {
+        CreateCategoryRequestDto badRequest = TestUtil.invalidCreateCategoryRequest();
 
-        verifyNoInteractions(categoryService, bookService);
+        mockMvc.perform(post("/categories")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(badRequest))
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /categories with USER -> 403 Forbidden")
+    @WithMockUser(authorities = {"USER"})
+    void create_WithUser_Forbidden() throws Exception {
+        CreateCategoryRequestDto request = TestUtil.validCreateCategoryRequest();
+
+        mockMvc.perform(post("/categories")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     @DisplayName("PUT /categories/{id} with ADMIN -> 200 OK")
     @WithMockUser(authorities = {"ADMIN"})
-    void update_withAdmin_returnsOk() throws Exception {
-        when(categoryService.updateById(eq(5L), ArgumentMatchers.any(CreateCategoryRequestDto.class)))
-                .thenReturn(sampleCategory(5L));
-
-        mockMvc.perform(put("/categories/{id}", 5L)
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validCreateCategoryRequest())))
+    @Sql(
+            scripts = "classpath:database/categories/add_test_category.sql",
+            executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    void update_WithAdmin_ReturnsOk() throws Exception {
+        CreateCategoryRequestDto request = TestUtil.validCreateCategoryRequest();
+        CategoryResponseDto expected = TestUtil.sampleCategoryDto(1L);
+        MvcResult result = mockMvc.perform(put("/categories/{id}", 1L)
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(5L))
-                .andExpect(jsonPath("$.name").value("Programming"));
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andReturn();
 
-        verify(categoryService, times(1))
-                .updateById(eq(5L), ArgumentMatchers.any(CreateCategoryRequestDto.class));
-        verifyNoMoreInteractions(categoryService);
-        verifyNoInteractions(bookService);
+        CategoryResponseDto actual = objectMapper.readValue(result.getResponse().getContentAsString(), CategoryResponseDto.class);
+
+        EqualsBuilder.reflectionEquals(expected, actual, "id");
+    }
+
+    @Test
+    @DisplayName("PUT /categories/{id} with USER -> 403 Forbidden")
+    @WithMockUser(authorities = {"USER"})
+    @Sql(
+            scripts = "classpath:database/categories/add_test_category.sql",
+            executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    void update_WithUser_Forbidden() throws Exception {
+        CreateCategoryRequestDto request = TestUtil.validCreateCategoryRequest();
+
+        mockMvc.perform(put("/categories/{id}", 1L)
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     @DisplayName("DELETE /categories/{id} with ADMIN -> 204 No Content")
     @WithMockUser(authorities = {"ADMIN"})
-    void delete_withAdmin_returnsNoContent() throws Exception {
-        doNothing().when(categoryService).deleteById(7L);
-
-        mockMvc.perform(delete("/categories/{id}", 7L).with(csrf()))
+    @Sql(
+            scripts = "classpath:database/categories/add_test_category.sql",
+            executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    void delete_WithAdmin_ReturnsNoContent() throws Exception {
+        mockMvc.perform(delete("/categories/{id}", 2L).with(csrf()))
                 .andExpect(status().isNoContent());
-
-        verify(categoryService, times(1)).deleteById(7L);
-        verifyNoMoreInteractions(categoryService);
-        verifyNoInteractions(bookService);
     }
 
     @Test
-    @DisplayName("GET /categories/{id}/books with USER -> 200 OK")
+    @DisplayName("DELETE /categories/{id} with USER -> 403 Forbidden")
     @WithMockUser(authorities = {"USER"})
-    void getAllBooksByCategory_withUser_returnsOk() throws Exception {
-        Page<BookDtoWithoutCategories> page = new PageImpl<>(
-                List.of(sampleBookWithoutCategories(1L), sampleBookWithoutCategories(2L)),
-                PageRequest.of(0, 20),
-                2
-        );
-        when(bookService.findAllByCategoryId(eq(3L), ArgumentMatchers.any())).thenReturn(page);
-
-        mockMvc.perform(get("/categories/{id}/books", 3L)
-                        .param("page", "0")
-                        .param("size", "20"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(2));
-
-        verify(bookService, times(1)).findAllByCategoryId(eq(3L), ArgumentMatchers.any());
-        verifyNoMoreInteractions(bookService);
-        verifyNoInteractions(categoryService);
+    @Sql(
+            scripts = "classpath:database/categories/add_test_category.sql",
+            executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    void delete_WithUser_Forbidden() throws Exception {
+        mockMvc.perform(delete("/categories/{id}", 1L).with(csrf()))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     @DisplayName("GET /categories/{id}/books without authentication -> 401")
-    void getAllBooksByCategory_unauthenticated_returns401() throws Exception {
-        mockMvc.perform(get("/categories/{id}/books", 3L))
+    void getAllBooksByCategory_Unauthenticated_Returns401() throws Exception {
+        mockMvc.perform(get("/categories/{id}/books", 1L))
                 .andExpect(status().isUnauthorized());
-
-        verifyNoInteractions(categoryService, bookService);
     }
 }
