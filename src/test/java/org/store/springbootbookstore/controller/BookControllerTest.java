@@ -114,7 +114,7 @@ class BookControllerTest {
     @DisplayName("POST /books with ADMIN authority -> 201 Created")
     @WithMockUser(authorities = {"ADMIN"})
     void create_WithAdmin_ReturnsCreated() throws Exception {
-        CreateBookRequestDto request = TestUtil.validCreateRequest();
+        CreateBookRequestDto request = TestUtil.validCreateBookRequest();
         BookDto expected = TestUtil.sampleBookDto(2L);
         MvcResult result = mockMvc.perform(post("/books")
                         .contentType("application/json")
@@ -133,7 +133,7 @@ class BookControllerTest {
     @DisplayName("POST /books with USER authority -> 403 Forbidden")
     @WithMockUser(authorities = {"USER"})
     void create_WithUser_Forbidden() throws Exception {
-        CreateBookRequestDto request = TestUtil.validCreateRequest();
+        CreateBookRequestDto request = TestUtil.validCreateBookRequest();
 
         mockMvc.perform(post("/books")
                         .contentType("application/json")
@@ -146,7 +146,7 @@ class BookControllerTest {
     @DisplayName("POST /books with ADMIN authority and invalid body -> 400 Bad Request")
     @WithMockUser(authorities = {"ADMIN"})
     void create_WithAdminAndInvalidBody_ReturnsBadRequest() throws Exception {
-        CreateBookRequestDto badRequest = TestUtil.invalidCreateRequestMissingTitle();
+        CreateBookRequestDto badRequest = TestUtil.invalidCreateBookRequestMissingTitle();
 
         mockMvc.perform(post("/books")
                         .contentType("application/json")
@@ -163,7 +163,7 @@ class BookControllerTest {
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
     )
     void update_WithAdmin_ReturnsOk() throws Exception {
-        CreateBookRequestDto request = TestUtil.validCreateRequest();
+        CreateBookRequestDto request = TestUtil.validCreateBookRequest();
         BookDto expected = TestUtil.sampleBookDto(2L);
 
         MvcResult result = mockMvc.perform(put("/books/{id}", 2L)
@@ -187,7 +187,7 @@ class BookControllerTest {
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
     )
     void update_WithUser_Forbidden() throws Exception {
-        CreateBookRequestDto request = TestUtil.validCreateRequest();
+        CreateBookRequestDto request = TestUtil.validCreateBookRequest();
 
         mockMvc.perform(put("/books/{id}", 2L)
                         .contentType("application/json")

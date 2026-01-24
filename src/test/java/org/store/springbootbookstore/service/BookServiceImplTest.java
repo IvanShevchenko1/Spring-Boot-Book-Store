@@ -265,35 +265,35 @@ class BookServiceImplTest {
         Long categoryId = 11L;
         Pageable pageable = PageRequest.of(0, 2);
 
-        Book b1 = new Book();
-        b1.setId(1L);
-        b1.setTitle("Book1");
+        Book book1 = new Book();
+        book1.setId(1L);
+        book1.setTitle("Book1");
 
-        Book b2 = new Book();
-        b2.setId(2L);
-        b2.setTitle("Book2");
+        Book book2 = new Book();
+        book2.setId(2L);
+        book2.setTitle("Book2");
 
-        Page<Book> page = new PageImpl<>(List.of(b1, b2), pageable, 2);
+        Page<Book> page = new PageImpl<>(List.of(book1, book2), pageable, 2);
 
-        BookDtoWithoutCategories d1 = new BookDtoWithoutCategories(
+        BookDtoWithoutCategories dto1 = new BookDtoWithoutCategories(
                 1L, "Book1", "A1", "I1", new BigDecimal("10.00"), null, null
         );
-        BookDtoWithoutCategories d2 = new BookDtoWithoutCategories(
+        BookDtoWithoutCategories dto2 = new BookDtoWithoutCategories(
                 2L, "Book2", "A2", "I2", new BigDecimal("20.00"), null, null
         );
 
         when(bookRepository.findBooksByCategories_Id(categoryId, pageable)).thenReturn(page);
-        when(bookMapper.toDtoWithoutCategories(b1)).thenReturn(d1);
-        when(bookMapper.toDtoWithoutCategories(b2)).thenReturn(d2);
+        when(bookMapper.toDtoWithoutCategories(book1)).thenReturn(dto1);
+        when(bookMapper.toDtoWithoutCategories(book2)).thenReturn(dto2);
 
         Page<BookDtoWithoutCategories> result = bookService.findAllByCategoryId(categoryId, pageable);
 
         assertEquals(2, result.getTotalElements());
-        assertEquals(List.of(d1, d2), result.getContent());
+        assertEquals(List.of(dto1, dto2), result.getContent());
 
         verify(bookRepository).findBooksByCategories_Id(categoryId, pageable);
-        verify(bookMapper).toDtoWithoutCategories(b1);
-        verify(bookMapper).toDtoWithoutCategories(b2);
+        verify(bookMapper).toDtoWithoutCategories(book1);
+        verify(bookMapper).toDtoWithoutCategories(book2);
         verifyNoMoreInteractions(bookRepository, bookMapper);
     }
 }

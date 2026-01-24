@@ -23,7 +23,7 @@ public class TestUtil {
         );
     }
 
-    public static CreateBookRequestDto validCreateRequest() {
+    public static CreateBookRequestDto validCreateBookRequest() {
         CreateBookRequestDto dto = new CreateBookRequestDto();
         dto.setTitle("Clean Code");
         dto.setAuthor("Robert C. Martin");
@@ -35,7 +35,7 @@ public class TestUtil {
         return dto;
     }
 
-    public static CreateBookRequestDto invalidCreateRequestMissingTitle() {
+    public static CreateBookRequestDto invalidCreateBookRequestMissingTitle() {
         CreateBookRequestDto dto = new CreateBookRequestDto();
         dto.setTitle(" ");
         dto.setAuthor("Robert C. Martin");
