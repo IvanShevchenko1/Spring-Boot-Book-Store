@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -51,6 +53,14 @@ public class CustomGlobalExceptionHandler {
         body.put("Timestamp", LocalDateTime.now());
         body.put("Error", ex.getMessage());
         return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler({AccessDeniedException.class, AuthorizationDeniedException.class})
+    public ResponseEntity<Object> handleAccessDenied(Exception ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("Timestamp", LocalDateTime.now());
+        body.put("Error", "Access Denied");
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
     }
 
     private String getErrorMessage(ObjectError e) {
