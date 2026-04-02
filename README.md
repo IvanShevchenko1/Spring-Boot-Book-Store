@@ -1,4 +1,4 @@
-# **Spring Boot Book Store**
+# **Online Book Store**
 
 ## Overview
 
@@ -52,11 +52,32 @@ The Docker setup starts two services:
 
 The application container depends on the database container and starts only after MySQL passes its health check. Database connection settings are injected through environment variables, and the Spring Boot container connects to MySQL using the internal Docker service name db.
 
-**Running with Docker**
-* Copy .env.template to .env
-* Fill in the required values
-* Build the project JAR
-* Start the containers
+## Getting Started
+
+### Clone the repository
+
+```bash
+git clone https://github.com/IvanShevchenko1/Spring-Boot-Book-Store.git
+cd Spring-Boot-Book-Store
+```
+
+---
+
+## Running the Application
+
+### Using Docker (recommended)
+
+```bash
+cp .env.template .env
+./mvnw clean package
+docker compose up --build
+```
+
+Application will be available at:
+
+```
+http://localhost:<SPRING_LOCAL_PORT>
+```
 
 | Variable | Description | Example |
 |-----------|--------------|---------|
@@ -86,6 +107,78 @@ The API is organized into logical groups:
 * Categories API — management of book categories
 * Shopping Cart API — managing user cart items
 * Orders API — order creation and tracking
+
+## ER Diagram
+
+<img width="1902" height="2840" alt="book_store_db@localhost  2" src="https://github.com/user-attachments/assets/d95387d6-98a1-4a17-a6b0-cf6a96249a51" />
+
+## API Endpoints by Role
+
+### Public Endpoints
+
+| Method | Endpoint | Description |
+|--------|--------|-------------|
+| POST | /auth/registration | Register new user |
+| POST | /auth/login | Authenticate user |
+
+---
+
+### USER Endpoints
+
+#### Books & Categories
+
+| Method | Endpoint | Description |
+|--------|--------|-------------|
+| GET | /books | Get all books |
+| GET | /books/{id} | Get book by ID |
+| GET | /categories | Get all categories |
+| GET | /categories/{id}/books | Get books by category |
+
+#### Shopping Cart
+
+| Method | Endpoint | Description |
+|--------|--------|-------------|
+| GET | /carts | Get current user cart |
+| POST | /carts | Add item to cart |
+| PUT | /carts/{id} | Update cart item quantity |
+| DELETE | /carts/{id} | Remove item from cart |
+
+#### Orders
+
+| Method | Endpoint | Description |
+|--------|--------|-------------|
+| GET | /orders | Get user orders |
+| POST | /orders | Create order |
+| GET | /orders/{id}/items | Get order items |
+| GET | /orders/{orderId}/items/{itemId} | Get specific item |
+
+---
+
+### ADMIN Endpoints
+
+#### Books
+
+| Method | Endpoint | Description |
+|--------|--------|-------------|
+| POST | /books | Create book |
+| PUT | /books/{id} | Update book |
+| DELETE | /books/{id} | Delete book |
+
+#### Categories
+
+| Method | Endpoint | Description |
+|--------|--------|-------------|
+| POST | /categories | Create category |
+| PUT | /categories/{id} | Update category |
+| DELETE | /categories/{id} | Delete category |
+
+#### Orders
+
+| Method | Endpoint | Description |
+|--------|--------|-------------|
+| PATCH | /orders/{id} | Update order status |
+
+---
 
 ## **Swagger Documentation**
 
